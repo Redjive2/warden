@@ -1,0 +1,41 @@
+# warden config. Copy to ~/.warden/warden.toml and fill in the ids.
+#
+# Every key feeds a ban decision, so an unknown key, a wrong type or a missing
+# id stops warden instead of being ignored. Get ids with Discord's Developer
+# Mode on: right-click a server, channel or role, then Copy ID.
+
+# The bot token lives in its own file, never here. Create it with:
+#   install -m 600 /dev/null ~/.warden/token   # then paste the token into it
+token_file = "~/.warden/token"
+
+# true: report "would ban" and ban nobody. Run like this for a day or two,
+# read the reports, then set false.
+dry_run = true
+
+[guild]
+id = 0               # the server
+report_channel = 0   # #system-updates
+
+[rules]
+evil_role = 0          # the "Evil Bot" role
+honeypot_channel = 0   # #❌-do-not-use-❌
+# How much of a banned user's history Discord deletes, in seconds.
+# 0 to 604800 (7 days). Default 3600 (1 hour).
+delete_message_seconds = 3600
+
+[exempt]
+# Never banned; a hit is reported instead. The server owner and anyone with
+# Administrator, Manage Server or Ban Members are always exempt as well.
+staff_roles = []
+users = []
+# Bot accounts allowed to post in the honeypot. Any other bot is banned like anyone.
+bots = []
+
+[report]
+# The first report after a quiet spell posts at once; anything inside the next
+# batch_seconds is posted together as one summary. 0 posts every report alone.
+batch_seconds = 30
+
+[paths]
+state_file = "~/.warden/state.json"   # the last honeypot message handled
+audit_log = "~/.warden/audit.jsonl"   # every decision, appended

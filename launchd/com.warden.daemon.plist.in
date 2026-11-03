@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!-- Rendered by scripts/deploy.sh; edits here are overwritten on the next deploy. -->
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.warden.daemon</string>
+    <key>ProgramArguments</key>
+    <array>
+        <string>@PYTHON@</string>
+        <string>-I</string>
+        <string>@CURRENT@/bin/warden</string>
+        <string>--config</string>
+        <string>@CONFIG@</string>
+        <string>--service</string>
+    </array>
+    <key>WorkingDirectory</key>
+    <string>@CURRENT@</string>
+    <key>RunAtLoad</key>
+    <true/>
+    <!-- Restart only after a non-zero exit (a crash). With service mode on, problems a
+         person must fix exit 0, so launchd stops instead of retrying them. -->
+    <key>KeepAlive</key>
+    <dict>
+        <key>SuccessfulExit</key>
+        <false/>
+    </dict>
+    <key>ThrottleInterval</key>
+    <integer>60</integer>
+    <key>ProcessType</key>
+    <string>Background</string>
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>PYTHONUNBUFFERED</key>
+        <string>1</string>
+    </dict>
+    <key>StandardOutPath</key>
+    <string>@LOG@</string>
+    <key>StandardErrorPath</key>
+    <string>@LOG@</string>
+</dict>
+</plist>

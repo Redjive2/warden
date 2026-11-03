@@ -1,0 +1,17 @@
+#!/usr/bin/env python3
+"""Launcher for a deployed warden. Run as: <venv python> -I bin/warden [args].
+
+-I (isolated mode) keeps Python from importing anything outside the release:
+no user site-packages, no PYTHON* environment variables, and no bytecode
+cached elsewhere. It also stops Python putting this script's directory on the
+path, so the release root is added here explicitly.
+"""
+
+import os
+import sys
+
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
+
+from warden.__main__ import main  # noqa: E402
+
+sys.exit(main())
