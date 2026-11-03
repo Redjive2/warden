@@ -11,12 +11,16 @@ In the [Developer Portal](https://discord.com/developers/applications):
 2. Under **Bot**, then **Privileged Gateway Intents**:
    - **Server Members Intent: on.** warden needs it for role changes, joins and the startup sweep.
    - **Message Content Intent: off.** A ban needs the author, never the text.
-3. Under **Bot**, use **Reset Token** and copy it **straight into the token file**, never into chat:
-   ```sh
-   install -m 600 /dev/null ~/.warden/token && open -e ~/.warden/token
-   ```
-   In TextEdit use **Format → Make Plain Text** before pasting, then save. If saving loosens
-   the file's mode, `chmod 600 ~/.warden/token`.
+3. Under **Bot**, use **Reset Token** and copy it. Paste it only where `deploy.sh` asks for it,
+   never into chat:
+   - **System mode:** `sudo scripts/deploy.sh --system` asks for it with hidden input and
+     stores it readable only by `_warden`. To replace it later, add `--rotate-token`.
+   - **Per-user mode:** put it in the token file yourself.
+     ```sh
+     install -m 600 /dev/null ~/.warden/token && open -e ~/.warden/token
+     ```
+     In TextEdit use **Format → Make Plain Text** before pasting, then save. If saving loosens
+     the file's mode, run `chmod 600 ~/.warden/token`.
 
 ## 2. Invite it with the least it needs
 
@@ -57,7 +61,8 @@ Turn on **User Settings → Advanced → Developer Mode**, then right-click and 
 - the report channel;
 - any staff roles.
 
-Put them in `~/.warden/warden.toml`; `warden.toml.example` documents every key.
+Put them in the config, `warden.toml.example` documents every key. Edit it with
+`sudo -e /var/lib/warden/warden.toml` in system mode, or `~/.warden/warden.toml` per user.
 
 On every start, warden lists any setup problem it can see in the report channel: a missing
 permission, a hidden channel, or its role ranking too low. Fix those first.
