@@ -179,6 +179,38 @@ class HoneypotDeletionTest(unittest.TestCase):
                       "messages will stay up", w.startup_problems(guild))
 
 
+class DedupePerRuleTest(unittest.TestCase):
+    """The case that went silent live: the owner posted in the honeypot, then
+    claimed Evil Bot 21 s later, and the role claim produced nothing at all."""
+
+    def test_honeypot_then_role_claim_reports_both(self):
+        w, guild, report, honeypot, evil, staff = make()
+        guild.owner_id = SPAMMER
+        owner = Member(SPAMMER, guild=guild)
+        run(w.message(Message(5001, owner, honeypot, guild)))
+        run(w.member_update(owner, Member(SPAMMER, roles=[evil], guild=guild)))
+        self.assertEqual(len(report.sent), 2)
+        self.assertIn("posted in", report.sent[0][0])
+        self.assertIn("holds the Evil Bot role, but they own the server", report.sent[1][0])
+        self.assertNotIn("duplicate", [e["event"] for e in audit_events(w)])
+
+    def test_role_claim_then_honeypot_reports_both(self):
+        w, guild, report, honeypot, evil, staff = make(config(dry_run=True))
+        holder = Member(SPAMMER, roles=[evil], guild=guild)
+        run(w.member_join(holder))
+        run(w.message(Message(5001, holder, honeypot, guild)))
+        self.assertEqual(len(report.sent), 2)
+
+    def test_the_same_rule_is_still_deduped(self):
+        w, guild, report, honeypot, evil, staff = make()
+        guild.ban_error = forbidden()  # stays a member, so a second claim could repeat
+        before = Member(SPAMMER, guild=guild)
+        after = Member(SPAMMER, roles=[evil], guild=guild)
+        run(w.member_update(before, after))
+        run(w.member_update(before, after))
+        self.assertEqual(len(report.sent), 1)
+
+
 class RoleTest(unittest.TestCase):
     def test_role_added_bans(self):
         w, guild, report, honeypot, evil, staff = make()

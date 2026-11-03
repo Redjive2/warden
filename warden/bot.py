@@ -22,9 +22,11 @@ from .report import Reporter
 from .rules import HONEYPOT, ROLE, Outcome, Target, Trigger
 from .store import Audit, State
 
-# A user warden has just acted on is not acted on again inside this window. A
-# spammer posting five times in the honeypot is one ban and one report, not five.
-# Short, so someone unbanned by a moderator who misbehaves again is still caught.
+# A rule that just fired for a user does not fire again for them inside this
+# window. A spammer posting five times in the honeypot is one ban and one report,
+# not five. Per rule, so a role claim right after a honeypot post still gets its
+# own outcome and report. Short, so someone unbanned by a moderator who
+# misbehaves again is still caught.
 DEDUPE_SECONDS = 600
 
 # Catch-up reads at most this many honeypot messages after a restart.
@@ -94,14 +96,21 @@ class Warden:
 
     # -- the one path every rule goes through --------------------------------
 
-    def _seen_recently(self, user_id: int) -> bool:
+    def _seen_recently(self, user_id: int, kind: str) -> bool:
+        """True when this rule fired for this user inside DEDUPE_SECONDS.
+
+        Keyed on (user, rule), not the user alone. Keyed on the user, a role
+        claim inside ten minutes of a honeypot hit (or the other way round) was
+        swallowed as a duplicate, with no outcome and no report.
+        """
         now = self.clock()
-        for uid, at in list(self._recent.items()):
+        for key, at in list(self._recent.items()):
             if now - at > DEDUPE_SECONDS:
-                del self._recent[uid]
-        if user_id in self._recent:
+                del self._recent[key]
+        key = (user_id, kind)
+        if key in self._recent:
             return True
-        self._recent[user_id] = now
+        self._recent[key] = now
         return False
 
     async def handle(self, guild: Any, user: Any, trigger: Trigger,
@@ -111,7 +120,7 @@ class Warden:
         message_deletion is what already happened to the honeypot message, if
         any; it rides along on the outcome so the report says it.
         """
-        if self._seen_recently(user.id):
+        if self._seen_recently(user.id, trigger.kind):
             self.audit.write("duplicate", user_id=str(user.id), trigger=trigger.kind,
                              message_id=None if trigger.message_id is None else str(trigger.message_id))
             return None
